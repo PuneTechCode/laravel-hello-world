@@ -1,0 +1,71 @@
+name: Deploy app on EC2
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      ec2_ips: ${{ steps.get_ips.outputs.ec2_ips }}
+
+    steps:
+        - uses: shivammathur/setup-php@main
+          with:
+            php-version: '8.3'
+        - uses: actions/checkout@v4
+
+        - name: Copy .env
+          run: php -r "file_exists('.env') || copy('.env.example', '.env');"
+
+        - name: Install Dependencies
+          run: composer install -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
+
+        - name: Execute db migrate command
+          run: |
+           mkdir -p database
+           touch database/database.sqlite
+           php artisan migrate --no-interaction -vvv
+
+        - name: Create deployment artifact
+          run: tar -czf ${{ github.sha }}.tar.gz --exclude=*.git --exclude=tests *
+        
+        - name: Store artifact for distribution
+          uses: actions/upload-artifact@v4
+          with:
+            name: app-build
+            path: ${{ github.sha }}.tar.gz
+        
+        - name: configure gcloud
+          uses: 'google-github-actions/auth@v2'
+          with:
+            credentials_json: '${{ secrets.GOOGLE_CREDENTIALS }}'
+        
+        - name: Get VM instance public IP
+          id: get_ips
+          run: |
+            PUBLIC_IPS=$(gcloud compute instances list --filter="labels.managed_by=terraform AND status:RUNNING" --format="value(networkInterfaces[0].accessConfigs[0].natIP)")
+            echo "::set-output name=ec2_ips::$PUBLIC_IPS"
+            if [ "$PUBLIC_IPS" == "null" ]; then
+                echo "::set-output name=ec2_ips::[]"
+                exit 1
+            else
+                echo "::set-output name=ec2_ips::$PUBLIC_IPS"
+            fi
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    if: ${{ fromJson(needs.build.outputs.ec2_ips) != '[]' }}
+    strategy:
+        matrix:
+            ip: ${{ fromJson(needs.build.outputs.ec2_ips) }}
+    steps:
+        - uses: actions/download-artifact@v4
+          with:
+            name: app-build
+
+        - name: print ip
+          run: echo ${{ matrix.ip }}
