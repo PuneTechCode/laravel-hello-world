@@ -76,11 +76,15 @@ jobs:
           uses: 'google-github-actions/auth@v2'
           with:
             credentials_json: '${{ secrets.GOOGLE_CREDENTIALS }}'
-            
-        - name: Update Firewall Rule to Allow SSH
+
+        - name: Add Firewall Rule to Allow SSH
           run: |
-            gcloud compute firewall-rules update allow-ssh-from-actions \
+            gcloud compute firewall-rules create allow-ssh-${{ matrix.ip }} \
             --source-ranges="${{ steps.ip.outputs.ipv4 }}/32"
+            --allow=tcp:22
+            --direction=INGRESS
+            --priority=1000
+            --target-tags=terraform
 
         - name: Upload
           uses: appleboy/scp-action@v0.1.3
@@ -157,5 +161,10 @@ jobs:
               script: |
                 cd $RELEASES_PATH && ls -t -1 | tail -n +3 | xargs rm -rf
                 cd $ARTIFACTS_PATH && ls -t -1 | tail -n +3 | xargs rm -rf
+
+        - name: Remove Firewall Rule to Allow SSH
+          if: always()
+          run: |
+            gcloud compute firewall-rules delete allow-ssh-${{ matrix.ip }} --quiet
 
         
