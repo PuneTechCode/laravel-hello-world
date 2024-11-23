@@ -1,8 +1,8 @@
-name: Deploy app on EC2
+name: Deploy app on Google VM
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "google-cloud-deploy" ]
   workflow_dispatch:
 
 jobs:
