@@ -88,20 +88,20 @@ jobs:
             --target-tags=terraform
 
         - name: Upload
-          uses: appleboy/scp-action@v0.1.3
+          uses: appleboy/scp-action@master
           with:
             host: ${{ matrix.ip }}
-            username: punesre
+            username: github-actions
             key: ${{ secrets.SSH_KEY }}
             port: 22
             source: ${{ github.sha }}.tar.gz
             target: /var/www/html/artifacts
 
         - name: executing remote ssh commands using ssh key
-          uses: appleboy/ssh-action@v1.0.3
+          uses: appleboy/ssh-action@master
           with:
             host: ${{ matrix.ip }}
-            username: punesre
+            username: github-actions
             key: ${{ secrets.SSH_KEY }}
             port: 22
             script: hostname
@@ -112,7 +112,7 @@ jobs:
            GITHUB_SHA: ${{ github.sha }}
           with:
             host: ${{ matrix.ip }}
-            username: punesre
+            username: github-actions
             key: ${{ secrets.SSH_KEY }}
             port: 22
             envs: GITHUB_SHA
@@ -136,7 +136,7 @@ jobs:
             LARAVEL_ENV: ${{ secrets.LARAVEL_ENV }}
           with:
             host: ${{ matrix.ip }}
-            username: punesre
+            username: github-actions
             key: ${{ secrets.SSH_KEY }}
             port: 22
             envs: GITHUB_SHA,RELEASE_PATH,ACTIVE_RELEASE_PATH,STORAGE_PATH,BASE_PATH,LARAVEL_ENV
@@ -155,7 +155,7 @@ jobs:
             ARTIFACTS_PATH: /var/www/html/artifacts
           with:
               host: ${{ matrix.ip }}
-              username: punesre
+              username: github-actions
               key: ${{ secrets.SSH_KEY }}
               port: 22
               envs: RELEASES_PATH, ARTIFACTS_PATH
