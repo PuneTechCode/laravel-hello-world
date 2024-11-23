@@ -79,11 +79,12 @@ jobs:
 
         - name: Add Firewall Rule to Allow SSH
           run: |
-            gcloud compute firewall-rules create allow-ssh-${{ matrix.ip }} \
-            --source-ranges="${{ steps.ip.outputs.ipv4 }}/32"
-            --allow=tcp:22
-            --direction=INGRESS
-            --priority=1000
+            converted_ip=$(echo "${{ matrix.ip }}" | sed 's/\./-/g')
+            gcloud compute firewall-rules create allow-ssh-$converted_ip \
+            --source-ranges="${{ steps.ip.outputs.ipv4 }}/32" \
+            --allow=tcp:22 \
+            --direction=INGRESS \
+            --priority=1000 \
             --target-tags=terraform
 
         - name: Upload
