@@ -166,6 +166,7 @@ jobs:
         - name: Remove Firewall Rule to Allow SSH
           if: always()
           run: |
-            gcloud compute firewall-rules delete allow-ssh-${{ matrix.ip }} --quiet
+            converted_ip=$(echo "${{ matrix.ip }}" | sed 's/\./-/g')
+            gcloud compute firewall-rules delete allow-ssh-$converted_ip --quiet
 
         
