@@ -47,13 +47,11 @@ jobs:
           id: get_ips
           run: |
             PUBLIC_IPS=$(gcloud compute instances list --filter="labels.managed_by=terraform AND status:RUNNING" --format="value(networkInterfaces[0].accessConfigs[0].natIP)")
-            echo "::set-output name=ec2_ips::$PUBLIC_IPS"
-            if [ "$PUBLIC_IPS" == "null" ]; then
-                echo "::set-output name=ec2_ips::[]"
-                exit 1
-            else
-                echo "::set-output name=ec2_ips::$PUBLIC_IPS"
-            fi
+            echo "Fetched IPs: $PUBLIC_IPS"
+            # Convert newline-separated IPs to a JSON array for GitHub Actions matrix
+            ips_json=$(echo "$PUBLIC_IPS" | jq -R -s -c 'split("\n")[:-1]')
+            echo "IPs JSON: $ips_json"
+            echo "::set-output name=ec2_ips::$ips_json"
 
   deploy:
     runs-on: ubuntu-latest
