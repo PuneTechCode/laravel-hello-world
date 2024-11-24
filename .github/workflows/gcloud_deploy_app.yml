@@ -119,6 +119,7 @@ jobs:
             port: 22
             envs: GITHUB_SHA
             script: |
+                systemctl stop nginx
                 mkdir -p "/var/www/html/releases/${GITHUB_SHA}"
                 tar xzf /var/www/html/artifacts/${GITHUB_SHA}.tar.gz -C "/var/www/html/releases/${GITHUB_SHA}"
                 rm -rf /var/www/html/releases/${GITHUB_SHA}/storage
@@ -148,6 +149,7 @@ jobs:
                 ln -s -f $STORAGE_PATH $RELEASE_PATH
                 ln -s -n -f $RELEASE_PATH $ACTIVE_RELEASE_PATH
                 sudo chmod -R 0777 /var/www/html/current 
+                systemctl start nginx
                 cd /var/www/html/current && php artisan key:generate
 
         - name: Run after hooks
